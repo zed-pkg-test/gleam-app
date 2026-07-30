@@ -1,0 +1,9 @@
+name = "gleam_app"
+version = "0.1.0"
+licences = ["MIT"]
+description = "Consumes zed-pkg-test/gleam-lib via zed while Hex owns the rest."
+
+[dependencies]
+gleam_stdlib = ">= 0.34.0 and < 2.0.0"
+# Sourced via zed into [install].dir. Hex deps sit alongside, untouched.
+zed_pkg_test_gleam_lib = { path = "zed_modules/zed-pkg-test/gleam-lib" }

@@ -1,0 +1,22 @@
+[package]
+org = "zed-pkg-test"
+name = "gleam-app"
+version = "0.1.0"
+description = "A Gleam app sourcing one package via zed; no native adapter exists."
+license = "MIT"
+
+[package.repository]
+vcs = "git"
+url = "https://github.com/zed-pkg-test/gleam-app"
+
+# Gleam has NO zed adapter -- the adapter list is node/java/go/python/rust/dart.
+# So this is the fixture for the universal path: the package lands in the
+# install dir and the ONLY machine-readable description of it is
+# .zed/paths.json. gleam.toml still needs a hand-written path dependency,
+# because there is no GLEAMPATH-style override for zed to write.
+[install]
+dir = "zed_modules"
+adapter = "none"
+
+[dependencies]
+"zed-pkg-test/gleam-lib" = "^1.0.0"

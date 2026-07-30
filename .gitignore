@@ -1,0 +1,4 @@
+.zed/
+build/
+zed_modules/
+.zpkg.lock
