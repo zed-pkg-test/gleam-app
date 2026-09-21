@@ -7,6 +7,7 @@ import gleam/list
 import gleam/string
 import mist.{type Connection, type ResponseData}
 import rx
+import rx/eager
 import rx/flow
 import rx/future
 import rx/runtime
@@ -31,12 +32,27 @@ pub fn main() -> Nil {
 fn handle_request(request: Request(Connection)) -> Response(ResponseData) {
   case request.path_segments(request) {
     ["health"] -> text_response(200, "ok")
+    ["eager"] -> text_response(200, run_eager_pipeline())
     ["rx"] ->
       case run_pipeline() {
         Ok(body) -> text_response(200, body)
         Error(reason) -> text_response(500, reason)
       }
     _ -> text_response(404, "not found")
+  }
+}
+
+fn run_eager_pipeline() -> String {
+  let result: Result(List(Int), String) =
+    eager.from_list([1, 2, 3, 4, 5])
+    |> eager.map(fn(value) { value * 3 })
+    |> eager.filter(fn(value) { value > 6 })
+    |> eager.take(2)
+    |> eager.to_result
+
+  case result {
+    Error(reason) -> "error:" <> reason
+    Ok(values) -> values |> list.map(int.to_string) |> string.join(",")
   }
 }
 
