@@ -10,4 +10,4 @@ gleam_stdlib = ">= 1.0.0 and < 2.0.0"
 gleam_erlang = ">= 1.3.0 and < 2.0.0"
 gleam_http = ">= 4.4.0 and < 5.0.0"
 mist = ">= 6.0.3 and < 7.0.0"
-rx_gleam = { git = "https://github.com/ORESoftware/rx-gleam.git", ref = "090e8cbf6bb3cb96c5b50f9102bdbcdd40b38fd2" }
+rx_gleam = { git = "https://github.com/ORESoftware/rx-gleam.git", ref = "4533be4ee63688ece8ae70e0aadbd2fc71ad528a" }
