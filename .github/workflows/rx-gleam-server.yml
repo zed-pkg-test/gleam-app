@@ -1,0 +1,56 @@
+name: rx-gleam server consumer
+
+on:
+  pull_request:
+  push:
+    branches: [test/rx-gleam-server-consumer]
+
+permissions:
+  contents: read
+
+jobs:
+  live-server:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+
+      - uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124
+        with:
+          otp-version: '29.1'
+          gleam-version: '1.18.1'
+          rebar3-version: '3'
+
+      - name: Resolve exact rx-gleam git dependency
+        run: |
+          rm -f manifest.toml
+          gleam deps download
+
+      - name: Format and compile consumer
+        run: |
+          gleam format --check src
+          gleam check
+
+      - name: Start dummy server and exercise rx pipeline
+        shell: bash
+        run: |
+          set -euo pipefail
+          gleam run -m gleam_app >server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true; cat server.log' EXIT
+
+          for attempt in $(seq 1 40); do
+            if curl --fail --silent http://127.0.0.1:4100/health >/dev/null; then
+              break
+            fi
+            if ! kill -0 "$server_pid" 2>/dev/null; then
+              echo 'server exited before becoming healthy' >&2
+              exit 1
+            fi
+            sleep 0.25
+          done
+
+          test "$(curl --fail --silent http://127.0.0.1:4100/health)" = 'ok'
+          test "$(curl --fail --silent http://127.0.0.1:4100/rx)" = '10,20,30'
