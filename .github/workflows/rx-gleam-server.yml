@@ -33,7 +33,7 @@ jobs:
           gleam format --check src
           gleam check
 
-      - name: Start dummy server and exercise rx pipeline
+      - name: Start dummy server and exercise rx APIs
         shell: bash
         run: |
           set -euo pipefail
@@ -53,4 +53,5 @@ jobs:
           done
 
           test "$(curl --fail --silent http://127.0.0.1:4100/health)" = 'ok'
+          test "$(curl --fail --silent http://127.0.0.1:4100/eager)" = '9,12'
           test "$(curl --fail --silent http://127.0.0.1:4100/rx)" = '10,20,30'
