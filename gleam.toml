@@ -1,9 +1,13 @@
-name = "gleam_app"
+name = "rx_gleam_dummy_server"
 version = "0.1.0"
 licences = ["MIT"]
-description = "Consumes zed-pkg-test/gleam-lib via zed while Hex owns the rest."
+description = "External HTTP consumer fixture for ORESoftware/rx-gleam"
+target = "erlang"
+gleam = ">= 1.18.1"
 
 [dependencies]
-gleam_stdlib = ">= 0.34.0 and < 2.0.0"
-# Sourced via zed into [install].dir. Hex deps sit alongside, untouched.
-zed_pkg_test_gleam_lib = { path = "zed_modules/zed-pkg-test/gleam-lib" }
+gleam_stdlib = ">= 1.0.0 and < 2.0.0"
+gleam_erlang = ">= 1.3.0 and < 2.0.0"
+gleam_http = ">= 4.4.0 and < 5.0.0"
+mist = ">= 6.0.3 and < 7.0.0"
+rx_gleam = { git = "https://github.com/ORESoftware/rx-gleam.git", ref = "1630907aec9310d84f0dea2470eecf85c56ac7ea" }
