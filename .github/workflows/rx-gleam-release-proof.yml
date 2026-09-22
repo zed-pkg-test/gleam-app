@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           repository: ORESoftware/rx-gleam
-          ref: 56ce315df826c916317f45012e8c2fbdcda7c9ce
+          ref: 06bf93b3d5c5ddb6fac25e2afa0ee7fcb1b8b142
           path: rx-gleam
           fetch-depth: 0
           persist-credentials: false
@@ -52,7 +52,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = "56ce315df826c916317f45012e8c2fbdcda7c9ce"
+          test "$(git rev-parse HEAD)" = "06bf93b3d5c5ddb6fac25e2afa0ee7fcb1b8b142"
           gleam_version="$(sed -n 's/^version = "\([^"]*\)"/\1/p' gleam.toml | head -n1)"
           zed_version="$(sed -n 's/^version = "\([^"]*\)"/\1/p' .zpkg.toml | head -n1)"
           test "$gleam_version" = "$zed_version"
