@@ -1,0 +1,90 @@
+name: rx-gleam release proof
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/rx-gleam-release-proof.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prove-release-candidate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out proof repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+
+      - name: Check out exact rx-gleam release candidate
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          repository: ORESoftware/rx-gleam
+          ref: 231cf6e3df1d55696dc0dbe73cbcd81d71be726c
+          path: rx-gleam
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124
+        with:
+          otp-version: '29.1'
+          gleam-version: '1.18.1'
+          rebar3-version: '3'
+
+      - name: Install checksum-pinned Zed v0.3.0
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/zed.tar.gz"
+          curl --fail --silent --show-error --location --retry 3 \
+            https://github.com/zed-pkg/zed-cli/releases/download/v0.3.0/zed-x86_64-unknown-linux-musl.tar.gz \
+            -o "$archive"
+          echo "e380240c96242ab3b29e0e9d14c95ba946d086f20f0732e34d0e5cf47513efc7  $archive" | sha256sum --check
+          mkdir -p "$RUNNER_TEMP/zed-bin"
+          tar -xzf "$archive" -C "$RUNNER_TEMP/zed-bin"
+          echo "$RUNNER_TEMP/zed-bin" >> "$GITHUB_PATH"
+
+      - name: Prove exact candidate and release invariants
+        working-directory: rx-gleam
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "231cf6e3df1d55696dc0dbe73cbcd81d71be726c"
+          gleam_version="$(sed -n 's/^version = "\([^"]*\)"/\1/p' gleam.toml | head -n1)"
+          zed_version="$(sed -n 's/^version = "\([^"]*\)"/\1/p' .zpkg.toml | head -n1)"
+          test "$gleam_version" = "$zed_version"
+          test "$gleam_version" = "0.1.0"
+          grep -A3 '^\[targets.gleam.native\]' .zpkg.toml | grep -q 'registry = "hex"'
+          grep -A3 '^\[targets.gleam.native\]' .zpkg.toml | grep -q 'package = "rx_gleam"'
+
+      - name: Prove package compiles, tests, docs, and Hex payload
+        working-directory: rx-gleam
+        shell: bash
+        run: |
+          set -euo pipefail
+          gleam deps download
+          git diff --exit-code -- manifest.toml
+          gleam format --check src test
+          gleam check
+          gleam test
+          gleam docs build
+          gleam export hex-tarball
+          test -s build/rx_gleam-0.1.0.tar
+
+      - name: Prove Zed native-Hex release route without credentials
+        working-directory: rx-gleam
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .zed/native-release/hex
+          cp build/rx_gleam-0.1.0.tar .zed/native-release/hex/rx_gleam-0.1.0.tar
+          zed validate
+          zed release plan --json | tee "$RUNNER_TEMP/rx-gleam-release-plan.json"
+          grep -q 'hex' "$RUNNER_TEMP/rx-gleam-release-plan.json"
+          grep -q 'rx_gleam' "$RUNNER_TEMP/rx-gleam-release-plan.json"
+          zed release preflight
+          zed release publish --target gleam --dry-run
+          zed pack
