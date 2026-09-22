@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           repository: ORESoftware/rx-gleam
-          ref: 231cf6e3df1d55696dc0dbe73cbcd81d71be726c
+          ref: 093184326d79b22798f2d1e113d2b39451617ce0
           path: rx-gleam
           fetch-depth: 0
           persist-credentials: false
@@ -52,13 +52,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = "231cf6e3df1d55696dc0dbe73cbcd81d71be726c"
+          test "$(git rev-parse HEAD)" = "093184326d79b22798f2d1e113d2b39451617ce0"
           gleam_version="$(sed -n 's/^version = "\([^"]*\)"/\1/p' gleam.toml | head -n1)"
           zed_version="$(sed -n 's/^version = "\([^"]*\)"/\1/p' .zpkg.toml | head -n1)"
           test "$gleam_version" = "$zed_version"
           test "$gleam_version" = "0.1.0"
-          grep -A3 '^\[targets.gleam.native\]' .zpkg.toml | grep -q 'registry = "hex"'
-          grep -A3 '^\[targets.gleam.native\]' .zpkg.toml | grep -q 'package = "rx_gleam"'
+          grep -A3 '^\[publish.native\]' .zpkg.toml | grep -q 'registry = "hex"'
+          grep -A3 '^\[publish.native\]' .zpkg.toml | grep -q 'package = "rx_gleam"'
 
       - name: Prove package compiles, tests, docs, and Hex payload
         working-directory: rx-gleam
@@ -86,5 +86,5 @@ jobs:
           grep -q 'hex' "$RUNNER_TEMP/rx-gleam-release-plan.json"
           grep -q 'rx_gleam' "$RUNNER_TEMP/rx-gleam-release-plan.json"
           zed release preflight
-          zed release publish --target gleam --dry-run
+          zed release publish --dry-run
           zed pack
