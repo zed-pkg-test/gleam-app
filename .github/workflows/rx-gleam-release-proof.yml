@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           repository: ORESoftware/rx-gleam
-          ref: 06bf93b3d5c5ddb6fac25e2afa0ee7fcb1b8b142
+          ref: 26bc3d10eb9ceffd4d36551ddd538cd0fb8c15e6
           path: rx-gleam
           fetch-depth: 0
           persist-credentials: false
@@ -52,7 +52,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = "06bf93b3d5c5ddb6fac25e2afa0ee7fcb1b8b142"
+          test "$(git rev-parse HEAD)" = "26bc3d10eb9ceffd4d36551ddd538cd0fb8c15e6"
           gleam_version="$(sed -n 's/^version = "\([^"]*\)"/\1/p' gleam.toml | head -n1)"
           zed_version="$(sed -n 's/^version = "\([^"]*\)"/\1/p' .zpkg.toml | head -n1)"
           test "$gleam_version" = "$zed_version"
@@ -60,6 +60,8 @@ jobs:
           grep -A3 '^\[publish.native\]' .zpkg.toml | grep -q 'registry = "hex"'
           grep -A3 '^\[publish.native\]' .zpkg.toml | grep -q 'package = "rx_gleam"'
           grep -A3 '^\[install\]' .zpkg.toml | grep -q 'adapter = "none"'
+          grep -A3 '^\[hooks\]' .zpkg.toml | grep -q 'pre-install = \["sh ./scripts/zed-pre-install.sh"\]'
+          grep -A3 '^\[hooks\]' .zpkg.toml | grep -q 'post-install = \["sh ./scripts/zed-post-install.sh"\]'
           ! grep -q '^\[targets\.' .zpkg.toml
 
       - name: Prove package compiles, tests, docs, and Hex payload
@@ -84,9 +86,10 @@ jobs:
           mkdir -p .zed/native-release/hex
           cp build/rx_gleam-0.1.0.tar .zed/native-release/hex/rx_gleam-0.1.0.tar
           zed validate
+          sh conformance/package-smoke.sh
+          zed pack
           zed release plan --json | tee "$RUNNER_TEMP/rx-gleam-release-plan.json"
           grep -q 'hex' "$RUNNER_TEMP/rx-gleam-release-plan.json"
           grep -q 'rx_gleam' "$RUNNER_TEMP/rx-gleam-release-plan.json"
           zed release preflight
           zed release publish --dry-run
-          zed pack
