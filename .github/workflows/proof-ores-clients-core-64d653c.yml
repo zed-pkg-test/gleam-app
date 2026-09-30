@@ -1,0 +1,33 @@
+name: proof ores-clients-core 64d653c
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/proof-ores-clients-core-64d653c.yml'
+
+permissions:
+  contents: read
+
+env:
+  SUBJECT_SHA: 64d653c2550f9ac3b7fd93e3bb1ad7a9e9834681
+
+jobs:
+  rust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: ORESoftware/ores-clients-core
+          ref: ${{ env.SUBJECT_SHA }}
+          path: subject
+          persist-credentials: false
+      - run: test "$(git -C subject rev-parse HEAD)" = "$SUBJECT_SHA"
+      - uses: dtolnay/rust-toolchain@4be7066ada62dd38de10e7b70166bc74ed198c30
+        with:
+          components: rustfmt, clippy
+      - working-directory: subject
+        run: cargo fmt --all -- --check
+      - working-directory: subject
+        run: cargo clippy --all-targets --all-features -- -D warnings
+      - working-directory: subject
+        run: cargo test --all-targets --all-features
